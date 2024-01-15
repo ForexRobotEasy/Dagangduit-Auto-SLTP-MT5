@@ -1,0 +1,124 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                      Dagangduit Auto SLTP MT5    |
+//|                                       https://www.forexroboteasy.com |
+//|                                       Developed by Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+// Define input parameters
+input int StopLoss = 50; // Default stop loss in pips
+input int TakeProfit = 100; // Default take profit in pips
+input bool HideSLTP = true; // Option to hide SL and TP values
+input bool LockProfit = true; // Option to enable profit locking
+input bool TrailingStop = true; // Option to enable trailing stop
+
+// Define global variables
+double trailingStop; // Trailing stop value
+double initialStopLoss; // Initial stop loss value
+double initialTakeProfit; // Initial take profit value
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Store initial SL and TP values
+    initialStopLoss = StopLoss;
+    initialTakeProfit = TakeProfit;
+
+    // Calculate trailing stop value based on current symbol digits
+    trailingStop = SymbolInfoDouble(Symbol(), SYMBOL_TRADE_TICK_SIZE) * 10;
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Restore initial SL and TP values
+    StopLoss = initialStopLoss;
+    TakeProfit = initialTakeProfit;
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Check if hide SL and TP option is enabled
+    if (HideSLTP)
+    {
+        HideStopLoss();
+        HideTakeProfit();
+    }
+
+    // Check if profit locking option is enabled
+    if (LockProfit)
+    {
+        LockProfitLevel();
+    }
+
+    // Check if trailing stop option is enabled
+    if (TrailingStop)
+    {
+        ApplyTrailingStop();
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Function to hide Stop Loss                                       |
+//+------------------------------------------------------------------+
+void HideStopLoss()
+{
+    // Set stop loss to 0
+    StopLoss = 0;
+}
+
+//+------------------------------------------------------------------+
+//| Function to hide Take Profit                                     |
+//+------------------------------------------------------------------+
+void HideTakeProfit()
+{
+    // Set take profit to 0
+    TakeProfit = 0;
+}
+
+//+------------------------------------------------------------------+
+//| Function to lock profit level                                    |
+//+------------------------------------------------------------------+
+void LockProfitLevel()
+{
+    // Calculate current unrealized profit
+    double unrealizedProfit = AccountInfoDouble(ACCOUNT_PROFIT);
+
+    // Check if unrealized profit is greater than 0
+    if (unrealizedProfit > 0)
+    {
+        // Calculate new take profit level based on current unrealized profit
+        double newTakeProfit = SymbolInfoDouble(Symbol(), SYMBOL_BID) + unrealizedProfit;
+
+        // Modify take profit level
+        TakeProfit = newTakeProfit;
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Function to apply trailing stop                                   |
+//+------------------------------------------------------------------+
+void ApplyTrailingStop()
+{
+    // Calculate current unrealized profit
+    double unrealizedProfit = AccountInfoDouble(ACCOUNT_PROFIT);
+
+    // Check if unrealized profit is greater than 0
+    if (unrealizedProfit > 0)
+    {
+        // Calculate new stop loss level based on trailing stop value
+        double newStopLoss = SymbolInfoDouble(Symbol(), SYMBOL_BID) - trailingStop;
+
+        // Modify stop loss level
+        StopLoss = newStopLoss;
+    }
+}
